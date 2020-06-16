@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="7444f58e-8d9f-417f-af95-552d007dd8ee" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<flow name="mule-message-sequence-apiFlow" doc:id="247a3110-163f-44ac-80ed-5b256babc96a" >
+		<http:listener doc:name="Listener" doc:id="290dc106-d106-482d-8b7f-b1be1353bf70" config-ref="HTTP_Listener_config" path="/msgseq"/>
+		<ee:transform doc:name="Transform Message" doc:id="6b2bc977-3dca-43e4-add6-f870688401fd" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="varMessageSeq" ><![CDATA[%dw 2.0
+output application/json
+import * from dw::core::Arrays
+
+var messages = payload divideBy 3
+---
+{
+	messages : messages map(data,index)-> {
+		message: data,
+		index: index
+		}
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<foreach doc:name="For Each" doc:id="b97cfa71-675d-48d0-9ed3-ebde0df84df1" collection="#[vars.varMessageSeq.messages.message]">
+			<set-payload value="#[payload]" doc:name="Set Payload" doc:id="25406999-9a5c-4039-ad9b-1cf0127a4f5b" />
+			<logger level="INFO" doc:name="Logger" doc:id="72b941fa-ff13-44ab-89c4-3cbc181dcd39" message="#[payload]" />
+			<set-variable value="#[payload]" doc:name="Set Variable" doc:id="8ccf8ebb-9a24-4b3e-a26c-b49a11570802" variableName="varLastpyalod" />
+			</foreach>
+		<set-payload value="#[vars.varLastpyalod]" doc:name="Set Payload" doc:id="99f391da-9cdf-4c2f-9de9-f76ccfc8cccb" />
+	</flow>
+</mule>
